@@ -21,15 +21,32 @@ answering them, and can be read aloud.
 | `src/game.js` | Turn loop, rules, saving and resuming. |
 | `src/style.css`, `src/template.html` | Look and page shell. All sizes are in rem so the interface scales with the window. |
 | `src/dev-mock.js` | Local stand-in for the Claude runtime. Never published. |
-| `tests/` | Node tests for the board rules, the question service and the voice ranking. |
+| `src/build-info.js` | The build identity line shown at the foot of the game menu. |
+| `tests/` | Node tests for the board rules, the question service, the voice ranking, the server bridge and the build identity. |
 
-## Build and test
+## Check, build and release
+
+You need **Node 22 or newer** and **uv** (`brew install uv`). Nothing else is installed by hand.
 
 ```bash
-node build.mjs                 # writes dist/index.html (publish this) and dist/dev.html (adds the mock)
-node tests/layout.test.js
-node tests/questions.test.js
-node tests/voice.test.js
+./check        # every test, then a rebuild compared byte for byte with the tracked pages
+./release      # writes release/WedgeQuest-Studio-<version>.zip and its .sha256
+```
+
+`./check` must pass before every commit. `./release` refuses to run with uncommitted changes, or if
+`studio/` holds a `.env`, a `models/` folder or caches. The same commit always gives the same zip.
+
+The version lives in one place, `version.json`. The build stamps it, with the date and a build id, into
+every page and into `studio/server.py`; the game menu shows it and `/api/status` returns it. In the
+tracked files the build id reads `source`; `./release` replaces it with the commit. What changed in
+each version is in [CHANGELOG.md](CHANGELOG.md). The plan and its evidence are in
+[BUILD_PLAN.md](BUILD_PLAN.md) and `docs/milestones/`.
+
+To work on the game:
+
+```bash
+node build.mjs                 # rebuilds dist/ and studio/www/ after a change in src/
+node tests/layout.test.js      # one suite on its own (also: questions, voice, studio, build)
 python3 -m http.server 8765 --directory dist   # then open /dev.html
 ```
 

@@ -2,7 +2,10 @@
 //   dist/index.html      the page published as a Claude artifact (loads three.js and fonts from CDNs)
 //   dist/dev.html        the same plus a mock Claude runtime and a stand-in page skeleton, for local testing
 //   studio/www/          the home-server edition: everything served locally, plus the server bridge and studio voice
-//   node build.mjs
+//   node build.mjs               writes the tracked pages in place
+//   node build.mjs --out DIR     writes the same files under DIR instead (used by ./check and ./release)
+// Every output carries the build identity: version and date from version.json, and the commit from
+// WQ_COMMIT ("source" unless ./release sets it), so the tracked pages do not change with every commit.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -10,15 +13,37 @@ import vm from 'node:vm';
 import zlib from 'node:zlib';
 import { fileURLToPath } from 'node:url';
 
+const NODE_MIN = 22;
+if (Number(process.versions.node.split('.')[0]) < NODE_MIN) {
+  console.error(`Wedge Quest needs Node ${NODE_MIN} or newer; this is Node ${process.versions.node}. Install the current LTS from https://nodejs.org and try again.`);
+  process.exit(1);
+}
+
 const root = path.dirname(fileURLToPath(import.meta.url));
 const read = (f) => fs.readFileSync(path.join(root, f), 'utf8');
 
-const MODULES = ['layout', 'bank', 'questions', 'theme', 'audio', 'voice', 'textures', 'scenery', 'scene', 'ui', 'play-ui', 'game'];
+const outFlag = process.argv.indexOf('--out');
+if (outFlag !== -1 && !process.argv[outFlag + 1]) throw new Error('--out needs a folder');
+const outRoot = outFlag === -1 ? root : path.resolve(process.argv[outFlag + 1]);
+const write = (rel, data) => {
+  const file = path.join(outRoot, rel);
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, data);
+};
+
+// ---------- the build identity ----------
+const { version, date } = JSON.parse(read('version.json'));
+if (!/^\d+\.\d+\.\d+$/.test(version || '') || !/^\d{4}-\d\d-\d\d$/.test(date || '')) throw new Error('version.json needs "version": "1.2.3" and "date": "YYYY-MM-DD"');
+const commit = process.env.WQ_COMMIT || 'source';
+if (!/^[0-9a-z-]{1,40}$/.test(commit)) throw new Error('WQ_COMMIT must be a short commit id');
+const BUILD = JSON.stringify({ version, date, commit });
+
+const MODULES = ['build-info', 'layout', 'bank', 'questions', 'theme', 'audio', 'voice', 'textures', 'scenery', 'scene', 'ui', 'play-ui', 'game'];
 // The home-server edition adds the server bridge and the studio voice just before the game starts.
 const STUDIO_MODULES = [...MODULES.slice(0, -1), 'studio', 'voice-studio', 'game'];
 
 function bundle(names) {
-  let js = '';
+  let js = `\nwindow.WQ_BUILD = ${BUILD};\n`;
   for (const name of names) {
     const code = read(`src/${name}.js`);
     new vm.Script(code, { filename: `src/${name}.js` }); // syntax check
@@ -41,10 +66,9 @@ const RESET = ':root{color-scheme:light;padding-top:env(safe-area-inset-top,0px)
 const skeleton = (body) =>
   `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>${RESET}</style></head><body>${body}</body></html>`;
 
-fs.mkdirSync(path.join(root, 'dist'), { recursive: true });
-fs.writeFileSync(path.join(root, 'dist/index.html'), prod);
-fs.writeFileSync(path.join(root, 'dist/dev.html'), skeleton(dev));
-console.log(`built dist/index.html (${(prod.length / 1024).toFixed(0)} KB) and dist/dev.html`);
+write('dist/index.html', prod);
+write('dist/dev.html', skeleton(dev));
+console.log(`${version} (${date}, ${commit})\nbuilt dist/index.html (${(prod.length / 1024).toFixed(0)} KB) and dist/dev.html`);
 
 // ---------- the home-server edition ----------
 const www = path.join(root, 'studio/www');
@@ -117,7 +141,7 @@ function pieIcon(size) {
   ihdr[9] = 6; // RGBA
   return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
 }
-fs.writeFileSync(path.join(www, 'icon-180.png'), pieIcon(180));
+write('studio/www/icon-180.png', pieIcon(180));
 
 const localTemplate = template
   .replace(/<link rel="preconnect"[^>]*>\s*/g, '')
@@ -142,5 +166,12 @@ const studioShell = (body) =>
   '<link rel="icon" type="image/png" href="/icon-180.png"><link rel="apple-touch-icon" href="/icon-180.png">' +
   `<style>${RESET}</style></head><body>${body}</body></html>`;
 
-fs.writeFileSync(path.join(www, 'index.html'), studioShell(local));
+write('studio/www/index.html', studioShell(local));
+
+// The server carries the same identity, so a page and a server from different builds can be told apart.
+const serverSrc = read('studio/server.py');
+const BUILD_LINE = /^BUILD = \{.*\}$/m;
+if (!BUILD_LINE.test(serverSrc)) throw new Error('studio/server.py has no BUILD line to stamp');
+write('studio/server.py', serverSrc.replace(BUILD_LINE, () => `BUILD = ${BUILD}`));
+if (outRoot !== root) fs.chmodSync(path.join(outRoot, 'studio/server.py'), 0o755);
 console.log(`built studio/www/index.html (${(studioShell(local).length / 1024).toFixed(0)} KB), served with its own copy of three.js and the fonts`);

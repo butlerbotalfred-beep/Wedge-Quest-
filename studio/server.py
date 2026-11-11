@@ -49,7 +49,9 @@ from pathlib import Path
 from urllib.parse import urlsplit
 
 APP = "wedge-quest-studio"
-VERSION = "1.0.0"
+# Stamped by build.mjs from version.json; ./release puts the real commit here. The page carries the same three values.
+BUILD = {"version":"1.0.1","date":"2026-11-11","commit":"source"}
+VERSION = BUILD["version"]
 HERE = Path(__file__).resolve().parent
 WWW = HERE / "www"
 
@@ -635,7 +637,7 @@ class App:
             "reason": None if self.quiz.enabled else "no_key",
             "today": self.quiz.budget.snapshot(),
         }
-        return {"app": APP, "version": VERSION, "ai": ai, "tts": self.voice.status()}
+        return {"app": APP, "version": VERSION, "build": BUILD, "ai": ai, "tts": self.voice.status()}
 
 
 CSP = (
@@ -879,8 +881,33 @@ def address_lines(cfg: Config) -> list[str]:
     return lines
 
 
+def page_build() -> dict | None:
+    """The build stamped into www/index.html, or None when the page has no stamp (older than 1.0.1) or is missing."""
+    try:
+        m = re.search(r"window\.WQ_BUILD = (\{[^}]*\});", (WWW / "index.html").read_text(encoding="utf-8"))
+        build = json.loads(m.group(1)) if m else None
+    except (OSError, ValueError):
+        return None
+    return build if isinstance(build, dict) else None
+
+
+def build_text(build: dict | None) -> str:
+    if not build:
+        return "no version (older than 1.0.1)"
+    return f"{build.get('version', '?')} ({build.get('date', '?')}, {build.get('commit', '?')})"
+
+
 def banner(cfg: Config, app: App) -> str:
-    lines = ["", "  Wedge Quest Studio " + VERSION, ""]
+    lines = ["", "  Wedge Quest Studio " + build_text(BUILD), ""]
+    page = page_build()
+    if page != BUILD:
+        lines += [
+            "  WARNING: the game page and this server are from different builds.",
+            "           page    www/index.html is " + build_text(page),
+            "           server  server.py is " + build_text(BUILD),
+            "           Replace both files from the same package, then start again.",
+            "",
+        ]
     lines += address_lines(cfg)
     if len(lines) > 4:
         lines.append("  (open one of these on another computer, an iPad or a phone; use the same one each time)")

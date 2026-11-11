@@ -11,6 +11,7 @@ import hashlib
 import http.client
 import importlib.util
 import json
+import re
 import sys
 import tempfile
 import threading
@@ -256,6 +257,47 @@ class StaticAndStatusTests(StudioCase):
         app, port = self.studio(api_key=None, fake=None)
         s = json.loads(request(port, "GET", "/api/status")[1])
         self.assertEqual((s["ai"]["enabled"], s["ai"]["reason"]), (False, "no_key"))
+
+    def test_status_reports_the_build(self):
+        app, port = self.studio()
+        s = json.loads(request(port, "GET", "/api/status")[1])
+        self.assertEqual(s["build"], srv.BUILD)
+        self.assertEqual(s["version"], srv.BUILD["version"])
+        self.assertEqual(sorted(srv.BUILD), ["commit", "date", "version"])
+
+    def test_reads_the_build_stamped_into_the_page(self):
+        srv.WWW = self.www
+        self.assertIsNone(srv.page_build(), "a page with no stamp has no build")
+        (self.www / "index.html").write_text('<script>\nwindow.WQ_BUILD = {"version":"9.9.9","date":"2030-01-02","commit":"abc1234"};\n</script>')
+        self.assertEqual(srv.page_build(), {"version": "9.9.9", "date": "2030-01-02", "commit": "abc1234"})
+        (self.www / "index.html").write_text("window.WQ_BUILD = {broken;")
+        self.assertIsNone(srv.page_build())
+        (self.www / "index.html").unlink()
+        self.assertIsNone(srv.page_build())
+
+    def test_the_banner_warns_when_page_and_server_builds_differ(self):
+        app, port = self.studio()
+        stamp = lambda b: (self.www / "index.html").write_text("window.WQ_BUILD = " + json.dumps(b) + ";")  # noqa: E731
+        stamp(srv.BUILD)
+        same = srv.banner(app.cfg, app)
+        self.assertIn(f"Wedge Quest Studio {srv.BUILD['version']} ({srv.BUILD['date']}, {srv.BUILD['commit']})", same)
+        self.assertNotIn("WARNING", same)
+        stamp({**srv.BUILD, "version": "0.9.0"})
+        differ = srv.banner(app.cfg, app)
+        self.assertIn("WARNING", differ)
+        self.assertIn("0.9.0", differ)
+        (self.www / "index.html").write_text("<!doctype html><title>Game</title>")
+        self.assertIn("WARNING", srv.banner(app.cfg, app), "a page with no stamp is from before 1.0.1")
+
+    def test_the_shipped_page_and_the_server_are_the_same_build(self):
+        # C0.5: what the game menu shows (the stamp in the page) is what /api/status returns.
+        srv.WWW = Path(srv.__file__).resolve().parent / "www"
+        app, port = self.studio()
+        srv.WWW = Path(srv.__file__).resolve().parent / "www"  # studio() points it at the temp folder
+        page = request(port, "GET", "/")[1].decode()
+        m = re.search(r"window\.WQ_BUILD = (\{[^}]*\});", page)
+        self.assertIsNotNone(m, "the shipped page carries a build stamp")
+        self.assertEqual(json.loads(m.group(1)), json.loads(request(port, "GET", "/api/status")[1])["build"])
 
     def test_serves_game_files_with_headers(self):
         app, port = self.studio()

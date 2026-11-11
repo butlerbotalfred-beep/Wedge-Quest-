@@ -7,7 +7,7 @@ cd "$(dirname "$0")" || exit 1
 LOG="${WQ_LOG_FILE:-$HOME/Library/Logs/WedgeQuestStudio/server.log}"
 mkdir -p "$(dirname "$LOG")"
 # Keep the log small: past 2 MB the old one becomes server.log.1 and a fresh one starts.
-if [ -f "$LOG" ] && [ "$(stat -f %z "$LOG" 2>/dev/null || echo 0)" -gt 2097152 ]; then
+if [ -f "$LOG" ] && [ "$(wc -c <"$LOG" | tr -d ' ')" -gt 2097152 ]; then
   mv -f "$LOG" "$LOG.1"
 fi
 exec >>"$LOG" 2>&1
