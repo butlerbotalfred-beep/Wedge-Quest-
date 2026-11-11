@@ -30,7 +30,7 @@ You need **Node 22 or newer** and **uv** (`brew install uv`). Nothing else is in
 
 ```bash
 ./check        # every test, then a rebuild compared byte for byte with the tracked pages
-./release      # writes release/WedgeQuest-Studio-<version>.zip and its .sha256
+./release      # writes packages/WedgeQuest-Studio-<version>.zip and its .sha256
 ```
 
 `./check` must pass before every commit. `./release` refuses to run with uncommitted changes, or if

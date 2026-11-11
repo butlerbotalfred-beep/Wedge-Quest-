@@ -17,4 +17,4 @@ node_modules/
 # dist/ and studio/www/ are tracked on purpose: they are the shipped pages
 
 # Packages built by ./release (kept outside version history; the checksum identifies them)
-release/
+packages/

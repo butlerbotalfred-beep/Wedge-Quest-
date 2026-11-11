@@ -1,6 +1,6 @@
 #!/bin/bash
 # Builds the Studio package for the version in version.json:
-#   release/WedgeQuest-Studio-<version>.zip  and  release/WedgeQuest-Studio-<version>.zip.sha256
+#   packages/WedgeQuest-Studio-<version>.zip  and  packages/WedgeQuest-Studio-<version>.zip.sha256
 # The same commit always gives the same zip, byte for byte.
 # Usage:  ./release
 cd "$(dirname "$0")" || exit 1

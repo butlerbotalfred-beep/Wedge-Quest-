@@ -74,11 +74,11 @@ try {
   const name = `WedgeQuest-Studio-${version}.zip`;
   const zip = makeZip(entries, date);
   const sha = crypto.createHash('sha256').update(zip).digest('hex');
-  fs.mkdirSync(path.join(root, 'release'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'release', name), zip);
-  fs.writeFileSync(path.join(root, 'release', name + '.sha256'), `${sha}  ${name}\n`);
+  fs.mkdirSync(path.join(root, 'packages'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'packages', name), zip);
+  fs.writeFileSync(path.join(root, 'packages', name + '.sha256'), `${sha}  ${name}\n`);
   console.log(`Wedge Quest Studio ${version} (${date}, ${commit})`);
-  console.log(`release/${name}  ${entries.length} files, ${(zip.length / 1024).toFixed(0)} KB`);
+  console.log(`packages/${name}  ${entries.length} files, ${(zip.length / 1024).toFixed(0)} KB`);
   console.log(`sha256  ${sha}`);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
