@@ -16,7 +16,7 @@ definition; Notion is where status and evidence are recorded.
 
 | # | Milestone | Ships as | Closes | Status |
 | --- | --- | --- | --- | --- |
-| M0 | A safe home for the project | 1.0.1 | P1 P2 P5 P6 P7 | In progress: evidence in [docs/milestones/M0.md](docs/milestones/M0.md) |
+| M0 | A safe home for the project | 1.0.1 | P1 P2 P5 P6 P7 | Complete 11 Nov 2026: evidence in [docs/milestones/M0.md](docs/milestones/M0.md) |
 | M1 | The home install, verified | (no change) | P3, first look at P4 | Not started |
 | M2 | Never stuck, never lost | 1.1.0 | G1–G6 Q1 Q2 Q7 T1 T2 U5 U13 | Not started |
 | M3 | The key and the server are safe | 1.2.0 | S1–S5 S9–S16 T3 | Not started |
@@ -570,3 +570,4 @@ Started: <date>   Closed: <date>   Version: <x.y.z>   Package sha256: <…>
 | 2026-11-10 | Plan written from the audit. All "recommended" entries are proposals until you confirm them at the start of each milestone. | — |
 | 2026-11-11 | Project lives in `~/Projects/wedge-quest` on the MacBook. Second copy is the private GitHub repository `butlerbotalfred-beep/Wedge-Quest-`. | Michael |
 | 2026-11-11 | Packages go to `packages/`; tracked pages carry the build id `source` and `./release` stamps the commit; Node 22 is the minimum. Reasons in docs/milestones/M0.md. | Claude |
+| 2026-11-11 | M0 closed. `v1.0.1` is commit `3b8569b`. `WedgeQuest-Studio-1.0.1.zip` sha256 `eb7362676df6be6ff851154c66c76a814eb1b990bd410fe08dbe7eaf6f981d32`; `WedgeQuest-Cloud-1.0.1.html` sha256 `f2fe02eafc0dc59322493e29d97d58bc36b5ab0acbe832475e1cdfd168905cd3`. | Michael merged and tagged |
