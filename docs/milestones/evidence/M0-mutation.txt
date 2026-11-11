@@ -1,0 +1,9 @@
+CAUGHT menu line drops the date  (src/build-info.js)
+CAUGHT same() ignores the commit  (src/build-info.js)
+CAUGHT build ignores WQ_COMMIT  (build.mjs)
+CAUGHT server.py is not stamped  (build.mjs)
+CAUGHT page is not stamped  (build.mjs)
+CAUGHT /api/status omits the build  (studio/server.py)
+CAUGHT banner never warns  (studio/server.py)
+CAUGHT page_build always agrees  (studio/server.py)
+8 of 8 deliberate bugs caught

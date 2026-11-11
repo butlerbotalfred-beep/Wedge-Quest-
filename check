@@ -1,0 +1,44 @@
+#!/bin/bash
+# One command that proves the project is healthy:
+#   1. the JavaScript test suites
+#   2. the Python test suite for the home server
+#   3. a fresh build into a temporary folder, compared byte for byte with the tracked pages
+# Usage:  ./check
+cd "$(dirname "$0")" || exit 1
+set -u
+
+NODE_MIN=22
+say() { printf '\n== %s\n' "$*"; }
+fail() { printf '\nCHECK FAILED: %s\n' "$*" >&2; exit 1; }
+
+command -v node >/dev/null 2>&1 || fail "Node is not installed. Install Node $NODE_MIN or newer from https://nodejs.org"
+NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
+[ "$NODE_MAJOR" -ge "$NODE_MIN" ] || fail "Wedge Quest needs Node $NODE_MIN or newer; this is Node $(node -v). Install the current LTS from https://nodejs.org"
+export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$HOME/.cargo/bin"
+command -v uv >/dev/null 2>&1 || fail "uv is not installed (it sets up Python for the server tests). Install it with: brew install uv"
+
+# The tracked pages are built without a commit id; one left in the environment would make the comparison fail.
+unset WQ_COMMIT
+
+for suite in tests/*.test.js; do
+  say "JavaScript: $suite"
+  node "$suite" || fail "$suite"
+done
+
+say "Python: home server"
+# -B and -I: no cache folders are written into the project, and nothing outside it is picked up.
+# A few tests skip themselves when they cannot run here: the real voice (needs the downloaded model)
+# and the launchd file check (needs macOS). The summary line says how many.
+(cd studio && uv run --quiet --no-project --python 3.12 --with "anthropic>=2.3,<3" --with kokoro-onnx \
+  python -I -B -m unittest discover -s tests) || fail "the Python suite in studio/tests"
+
+say "Rebuild and compare with the tracked pages"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+node build.mjs --out "$TMP" >/dev/null || fail "node build.mjs"
+for f in dist/index.html dist/dev.html studio/www/index.html studio/server.py; do
+  cmp -s "$f" "$TMP/$f" || fail "$f is not what the source builds. Run: node build.mjs   then commit the result."
+  echo "same  $f"
+done
+
+printf '\nCHECK PASSED  %s\n' "$(node -p 'const v=require("./version.json"); v.version+" ("+v.date+")"')"

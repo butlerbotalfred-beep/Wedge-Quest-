@@ -1,0 +1,15 @@
+#!/bin/bash
+# Builds the Studio package for the version in version.json:
+#   packages/WedgeQuest-Studio-<version>.zip   for the Studio at home
+#   packages/WedgeQuest-Cloud-<version>.html   the page to publish as the cloud artifact
+# each with a .sha256 beside it. The same commit always gives the same files, byte for byte.
+# It runs ./check first and refuses if anything is not committed or not pushed.
+# Usage:  ./release
+cd "$(dirname "$0")" || exit 1
+NODE_MIN=22
+command -v node >/dev/null 2>&1 || { echo "Node is not installed. Install Node $NODE_MIN or newer from https://nodejs.org" >&2; exit 1; }
+if [ "$(node -p 'process.versions.node.split(".")[0]')" -lt "$NODE_MIN" ]; then
+  echo "Wedge Quest needs Node $NODE_MIN or newer; this is Node $(node -v). Install the current LTS from https://nodejs.org" >&2
+  exit 1
+fi
+exec node tools/release.mjs "$@"

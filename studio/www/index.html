@@ -526,6 +526,9 @@ button:disabled { cursor: default; }
   .ans .key { width: 2.5rem; height: 2.5rem; font-size: 1.25rem; }
 }
 
+/* The build identity at the foot of the game menu. */
+.build-line { margin: 0.9rem 0 0; text-align: center; font-size: 0.75rem; color: var(--ink-3); user-select: text; }
+
 </style>
 
 <div id="app">
@@ -579,6 +582,35 @@ button:disabled { cursor: default; }
 <script src="/vendor/three-0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
 
 <script>
+
+window.WQ_BUILD = {"version":"1.0.1","date":"2026-11-11","commit":"source"};
+
+/* ---- build-info.js ---- */
+// Which build this page is. The build puts the version, date and commit in `window.WQ_BUILD` just
+// above this file; the game menu shows the line and the home server reports the same three values.
+(function (root) {
+  'use strict';
+
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  function day(iso) {
+    const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(iso || '');
+    return m && MONTHS[m[2] - 1] ? `${Number(m[3])} ${MONTHS[m[2] - 1]} ${m[1]}` : iso || '';
+  }
+
+  // "Wedge Quest 1.0.1 · 11 Nov 2026 · abc1234"
+  function line(b) {
+    if (!b || !b.version) return 'Wedge Quest (unknown build)';
+    return ['Wedge Quest ' + b.version, day(b.date), b.commit].filter(Boolean).join(' · ');
+  }
+
+  function same(a, b) {
+    return !!a && !!b && a.version === b.version && a.date === b.date && a.commit === b.commit;
+  }
+
+  root.WQBuild = { line, same, current: () => root.WQ_BUILD || null };
+})(typeof window !== 'undefined' ? window : globalThis);
+
 
 /* ---- layout.js ---- */
 // Board geometry and movement rules. Pure functions: no DOM, no WebGL.
@@ -4794,7 +4826,8 @@ button:disabled { cursor: default; }
         h('button', { class: 'btn ghost', type: 'button', onclick: () => { m.close(); hk.onView(); } }, 'Reset the camera'),
         h('button', { class: 'btn ghost', type: 'button', onclick: () => { m.close(); hk.onRestart(); } }, 'Restart this game'),
         h('button', { class: 'btn ghost', type: 'button', onclick: () => { m.close(); hk.onSetup(); } }, 'Change players and topics'),
-        h('button', { class: 'btn primary', type: 'button', onclick: () => m.close() }, 'Back to the game'))
+        h('button', { class: 'btn primary', type: 'button', onclick: () => m.close() }, 'Back to the game')),
+      h('p', { class: 'build-line', id: 'buildLine', text: root.WQBuild ? root.WQBuild.line(root.WQBuild.current()) : '' })
     );
     const m = UI.modal(card, { label: 'Game menu', onClose: () => UI.stopSpeak() });
   };

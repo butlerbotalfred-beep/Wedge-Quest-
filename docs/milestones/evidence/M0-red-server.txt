@@ -1,0 +1,30 @@
+======================================================================
+ERROR: test_status_reports_the_build (test_server.StaticAndStatusTests.test_status_reports_the_build)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/claude/wedge-quest-/studio/tests/test_server.py", line 264, in test_status_reports_the_build
+    self.assertEqual(s["build"], srv.BUILD)
+                     ~^^^^^^^^^
+KeyError: 'build'
+
+======================================================================
+ERROR: test_the_banner_warns_when_page_and_server_builds_differ (test_server.StaticAndStatusTests.test_the_banner_warns_when_page_and_server_builds_differ)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/claude/wedge-quest-/studio/tests/test_server.py", line 280, in test_the_banner_warns_when_page_and_server_builds_differ
+    stamp(srv.BUILD)
+          ^^^^^^^^^
+AttributeError: module 'wqserver' has no attribute 'BUILD'
+
+======================================================================
+FAIL: test_the_shipped_page_and_the_server_are_the_same_build (test_server.StaticAndStatusTests.test_the_shipped_page_and_the_server_are_the_same_build)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/claude/wedge-quest-/studio/tests/test_server.py", line 298, in test_the_shipped_page_and_the_server_are_the_same_build
+    self.assertIsNotNone(m, "the shipped page carries a build stamp")
+AssertionError: unexpectedly None : the shipped page carries a build stamp
+
+----------------------------------------------------------------------
+Ran 4 tests in 3.511s
+
+FAILED (failures=1, errors=3)

@@ -440,7 +440,8 @@
         h('button', { class: 'btn ghost', type: 'button', onclick: () => { m.close(); hk.onView(); } }, 'Reset the camera'),
         h('button', { class: 'btn ghost', type: 'button', onclick: () => { m.close(); hk.onRestart(); } }, 'Restart this game'),
         h('button', { class: 'btn ghost', type: 'button', onclick: () => { m.close(); hk.onSetup(); } }, 'Change players and topics'),
-        h('button', { class: 'btn primary', type: 'button', onclick: () => m.close() }, 'Back to the game'))
+        h('button', { class: 'btn primary', type: 'button', onclick: () => m.close() }, 'Back to the game')),
+      h('p', { class: 'build-line', id: 'buildLine', text: root.WQBuild ? root.WQBuild.line(root.WQBuild.current()) : '' })
     );
     const m = UI.modal(card, { label: 'Game menu', onClose: () => UI.stopSpeak() });
   };
