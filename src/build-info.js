@@ -1,4 +1,4 @@
-// Which build this page is. The build stamps `window.WQ_BUILD = {version, date, commit}` just
+// Which build this page is. The build puts the version, date and commit in `window.WQ_BUILD` just
 // above this file; the game menu shows the line and the home server reports the same three values.
 (function (root) {
   'use strict';
