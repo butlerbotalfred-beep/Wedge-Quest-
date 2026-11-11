@@ -14,8 +14,10 @@ Nothing about how the game plays has changed. This version makes the project saf
   packages, the start-up text says so and names both.
 - **One command checks everything:** `./check` runs every test and confirms the shipped pages are
   exactly what the source builds.
-- **One command builds the package:** `./release` writes `WedgeQuest-Studio-<version>.zip` and its
-  checksum. The same commit always gives the same file.
+- **One command builds the package:** `./release` runs the check, then writes
+  `WedgeQuest-Studio-<version>.zip` for the Studio and `WedgeQuest-Cloud-<version>.html` for the cloud
+  artifact, each with its checksum. The same commit always gives the same files.
+- `./start.command --version` and `--check` now print the date and build id as well as the version.
 - The log tidy-up in `service.sh` no longer depends on a macOS-only command.
 - Node 22 or newer is required to build and test; the scripts say so plainly on anything older.
 - Removed leftovers: the `zip-share/` folder, its launch entry and the hand-made zip.

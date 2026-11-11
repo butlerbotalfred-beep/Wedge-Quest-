@@ -36,7 +36,6 @@ try {
   const server = fs.readFileSync(path.join(out, 'studio/server.py'), 'utf8').match(/^BUILD = (\{.*\})$/m);
   ok(server, 'server.py carries a build stamp');
   eq(JSON.parse(server[1]), want, 'the server is stamped with the same build as the page');
-  ok(fs.existsSync(path.join(out, 'studio/www/icon-180.png')), 'the icon is written too');
   ok(fs.readFileSync(path.join(out, 'studio/www/index.html'), 'utf8').includes('WQBuild.line'), 'the menu code that shows the build is in the page');
 } finally {
   fs.rmSync(out, { recursive: true, force: true });

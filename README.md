@@ -30,11 +30,18 @@ You need **Node 22 or newer** and **uv** (`brew install uv`). Nothing else is in
 
 ```bash
 ./check        # every test, then a rebuild compared byte for byte with the tracked pages
-./release      # writes packages/WedgeQuest-Studio-<version>.zip and its .sha256
+./release      # runs ./check, then writes the Studio zip and the cloud page into packages/, each with a .sha256
 ```
 
-`./check` must pass before every commit. `./release` refuses to run with uncommitted changes, or if
-`studio/` holds a `.env`, a `models/` folder or caches. The same commit always gives the same zip.
+`./check` must pass before every commit. The first run needs the internet (uv fetches Python 3.12 and the
+test packages). A few Python tests skip themselves when the downloaded voice model or macOS is not there.
+
+`./release` needs git. It refuses to run with uncommitted changes, with a commit that has not been
+pushed, if `./check` fails, if `studio/` holds a `.env`, a `models/` folder or caches, or if the version
+in `version.json` is already tagged on a different commit. It writes two things, both stamped with the
+commit: `packages/WedgeQuest-Studio-<version>.zip` (for the Studio) and
+`packages/WedgeQuest-Cloud-<version>.html` (the page to publish as the cloud artifact). The same commit
+always gives the same files, on any computer. After a release, tag it: `git tag v<version>`.
 
 The version lives in one place, `version.json`. The build stamps it, with the date and a build id, into
 every page and into `studio/server.py`; the game menu shows it and `/api/status` returns it. In the
@@ -75,13 +82,15 @@ using it; for working on it:
 | `src/studio.js` | Browser side of `/api/status` and `/api/ask`. Its `sample` has the shape of the Claude runtime's, so the Quizmaster uses it unchanged. |
 | `src/voice-studio.js` | The studio voice as a `WQVoice` engine: fetches short clips, schedules them on the audio clock, falls back to the browser voice. |
 | `tools/vendor.mjs` | Fetches three.js and the fonts into `studio/www/` and records their checksums in `studio/vendor.lock.json`. |
+| `tools/icon.mjs` | Draws `studio/www/icon-180.png`. Run it only to change the icon; the file is tracked. |
+| `tools/release.mjs` | Assembles the packages. Run through `./release`. |
 | `tests/studio.test.js`, `studio/tests/` | Node tests for the bridge and engine; Python tests for the server (a fake Claude API, plus the real voice model if present) and for the login item (a fake `launchctl`; `service.sh` run with a fake `uv`). |
 
 ```bash
 node tools/vendor.mjs          # once: fetch three.js and fonts into studio/www
 node build.mjs                 # also writes studio/www/index.html
 node tests/studio.test.js
-cd studio && uv run --no-project --python 3.12 --with "anthropic>=2.3,<3" --with kokoro-onnx python -I -m unittest discover -s tests
+cd studio && uv run --no-project --python 3.12 --with "anthropic>=2.3,<3" --with kokoro-onnx python -I -B -m unittest discover -s tests
 ```
 
 `studio/tests/fake_claude.py` is a stand-in for the Claude API: run it, then start the server with

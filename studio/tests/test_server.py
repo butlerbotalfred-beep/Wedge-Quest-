@@ -16,6 +16,7 @@ import sys
 import tempfile
 import threading
 import unittest
+from unittest import mock
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
@@ -273,7 +274,9 @@ class StaticAndStatusTests(StudioCase):
         (self.www / "index.html").write_text("window.WQ_BUILD = {broken;")
         self.assertIsNone(srv.page_build())
         (self.www / "index.html").unlink()
-        self.assertIsNone(srv.page_build())
+        self.assertEqual(srv.page_build(), {}, "a missing page is not the same as an old page")
+        self.assertEqual(srv.build_text({}), "missing or unreadable")
+        self.assertEqual(srv.build_text(None), "no version (older than 1.0.1)")
 
     def test_the_banner_warns_when_page_and_server_builds_differ(self):
         app, port = self.studio()
@@ -287,13 +290,19 @@ class StaticAndStatusTests(StudioCase):
         self.assertIn("WARNING", differ)
         self.assertIn("0.9.0", differ)
         (self.www / "index.html").write_text("<!doctype html><title>Game</title>")
-        self.assertIn("WARNING", srv.banner(app.cfg, app), "a page with no stamp is from before 1.0.1")
+        old = srv.banner(app.cfg, app)
+        self.assertIn("WARNING", old, "a page with no stamp is from before 1.0.1")
+        self.assertIn("older than 1.0.1", old)
+        with mock.patch.object(srv, "network_urls", return_value=[]):
+            self.assertNotIn("open one of these", srv.banner(app.cfg, app), "one address is not a list to choose from")
+        with mock.patch.object(srv, "network_urls", return_value=["http://192.168.1.5:8777"]):
+            self.assertIn("open one of these", srv.banner(app.cfg, app))
 
     def test_the_shipped_page_and_the_server_are_the_same_build(self):
         # C0.5: what the game menu shows (the stamp in the page) is what /api/status returns.
-        srv.WWW = Path(srv.__file__).resolve().parent / "www"
         app, port = self.studio()
         srv.WWW = Path(srv.__file__).resolve().parent / "www"  # studio() points it at the temp folder
+        self.addCleanup(setattr, srv, "WWW", self.www)
         page = request(port, "GET", "/")[1].decode()
         m = re.search(r"window\.WQ_BUILD = (\{[^}]*\});", page)
         self.assertIsNotNone(m, "the shipped page carries a build stamp")

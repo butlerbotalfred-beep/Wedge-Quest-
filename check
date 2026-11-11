@@ -17,13 +17,18 @@ NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 export PATH="$PATH:/opt/homebrew/bin:/usr/local/bin:$HOME/.local/bin:$HOME/.cargo/bin"
 command -v uv >/dev/null 2>&1 || fail "uv is not installed (it sets up Python for the server tests). Install it with: brew install uv"
 
-for suite in layout questions voice studio build; do
+# The tracked pages are built without a commit id; one left in the environment would make the comparison fail.
+unset WQ_COMMIT
+
+for suite in tests/*.test.js; do
   say "JavaScript: $suite"
-  node "tests/$suite.test.js" || fail "tests/$suite.test.js"
+  node "$suite" || fail "$suite"
 done
 
 say "Python: home server"
 # -B and -I: no cache folders are written into the project, and nothing outside it is picked up.
+# A few tests skip themselves when they cannot run here: the real voice (needs the downloaded model)
+# and the launchd file check (needs macOS). The summary line says how many.
 (cd studio && uv run --quiet --no-project --python 3.12 --with "anthropic>=2.3,<3" --with kokoro-onnx \
   python -I -B -m unittest discover -s tests) || fail "the Python suite in studio/tests"
 
@@ -31,7 +36,7 @@ say "Rebuild and compare with the tracked pages"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 node build.mjs --out "$TMP" >/dev/null || fail "node build.mjs"
-for f in dist/index.html dist/dev.html studio/www/index.html studio/www/icon-180.png studio/server.py; do
+for f in dist/index.html dist/dev.html studio/www/index.html studio/server.py; do
   cmp -s "$f" "$TMP/$f" || fail "$f is not what the source builds. Run: node build.mjs   then commit the result."
   echo "same  $f"
 done

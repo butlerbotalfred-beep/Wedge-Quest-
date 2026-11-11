@@ -3,11 +3,15 @@
 // The zip is written here, byte by byte, instead of with the `zip` program, so that the result does
 // not depend on the clock, the time zone, file permissions on this computer or the order the disk
 // lists files in: every entry gets the date from version.json, fixed permissions and a sorted name.
+// Entries are stored, not compressed, because compressed bytes can differ between computers and
+// versions of Node; the package is about 1 MB either way.
+//
+// It also writes the cloud page (dist/index.html stamped with the commit), the file to publish as
+// the Claude artifact, so that a published page can be traced to its commit too.
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import zlib from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -16,17 +20,30 @@ const stop = (msg) => {
   console.error(`RELEASE REFUSED: ${msg}`);
   process.exit(1);
 };
-const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
+const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+const tryGit = (...args) => {
+  try {
+    return git(...args);
+  } catch (e) {
+    return null;
+  }
+};
 
 // ---------- what must be true first ----------
-let commit;
-try {
-  commit = git('rev-parse', '--short=7', 'HEAD');
-} catch (e) {
-  stop('this folder is not a git repository, so the package cannot name its commit.');
-}
+if (tryGit('--version') === null) stop('git is not installed, so the package cannot name its commit.');
+const commit = tryGit('rev-parse', '--short=7', 'HEAD');
+if (!commit) stop('this folder is not a git repository with a commit, so the package cannot name its commit.');
 const dirty = git('status', '--porcelain');
 if (dirty) stop(`there are changes that are not committed, so the commit id would not describe the package:\n${dirty}\nCommit them (or put them aside) and run ./release again.`);
+
+const { version, date } = JSON.parse(fs.readFileSync(path.join(root, 'version.json'), 'utf8'));
+
+// One version, one commit: once v<version> is tagged, a different commit needs a new version number.
+const tagged = tryGit('rev-parse', '--short=7', '--verify', '--quiet', `refs/tags/v${version}^{commit}`);
+if (tagged && tagged !== commit) stop(`version ${version} is already tagged (v${version}, commit ${tagged}) and this is commit ${commit}.\nRaise the version in version.json, run node build.mjs, commit, and run ./release again.`);
+
+// The commit must exist somewhere other than this folder, or the id in the package could be lost.
+if (git('remote') && !git('branch', '-r', '--contains', 'HEAD')) stop(`commit ${commit} has not been pushed. Push it, then run ./release again.`);
 
 // Things that must never ship. Checked in studio/ itself, where a running server leaves them.
 const FORBIDDEN = [
@@ -52,14 +69,23 @@ const bad = present.flatMap((rel) => {
 });
 if (bad.length) stop(`these must not be in a package. Remove them from studio/ and run ./release again:\n${bad.join('\n')}`);
 
+// A package is only made from a commit that passes every test.
+if (!process.argv.includes('--checked')) {
+  console.log('Running ./check first...');
+  try {
+    execFileSync(path.join(root, 'check'), { cwd: root, stdio: ['ignore', 'ignore', 'inherit'] });
+  } catch (e) {
+    stop('./check did not pass. Run ./check to see why.');
+  }
+}
+
 // ---------- build into a temporary folder, stamped with the commit ----------
-const { version, date } = JSON.parse(fs.readFileSync(path.join(root, 'version.json'), 'utf8'));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'wq-release-'));
 try {
   execFileSync(process.execPath, [path.join(root, 'build.mjs'), '--out', tmp], { env: { ...process.env, WQ_COMMIT: commit }, stdio: ['ignore', 'ignore', 'inherit'] });
 
   // The package is the tracked contents of studio/, with the built files taken from the fresh build.
-  const BUILT = new Set(['studio/www/index.html', 'studio/www/icon-180.png', 'studio/server.py']);
+  const BUILT = new Set(['studio/www/index.html', 'studio/server.py']);
   const EXEC = /(\.command|\.sh|^studio\/server\.py)$/;
   const files = git('ls-files', '-z', 'studio').split('\0').filter(Boolean).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   for (const b of BUILT) if (!files.includes(b)) stop(`${b} is not tracked.`);
@@ -67,19 +93,25 @@ try {
   const TOP = 'WedgeQuest-Studio/';
   const entries = files.map((rel) => ({
     name: TOP + rel.slice('studio/'.length),
-    data: fs.readFileSync(path.join(BUILT.has(rel) ? tmp : root, rel)),
+    // built files come from the fresh build; everything else is read from the commit itself, not from the folder
+    data: BUILT.has(rel) ? fs.readFileSync(path.join(tmp, rel)) : execFileSync('git', ['cat-file', 'blob', `HEAD:${rel}`], { cwd: root, maxBuffer: 64 * 1024 * 1024 }),
     mode: EXEC.test(rel) ? 0o755 : 0o644,
   }));
 
   const name = `WedgeQuest-Studio-${version}.zip`;
   const zip = makeZip(entries, date);
-  const sha = crypto.createHash('sha256').update(zip).digest('hex');
+  const cloudName = `WedgeQuest-Cloud-${version}.html`;
+  const cloud = fs.readFileSync(path.join(tmp, 'dist/index.html'));
+  const sha256 = (buf) => crypto.createHash('sha256').update(buf).digest('hex');
   fs.mkdirSync(path.join(root, 'packages'), { recursive: true });
-  fs.writeFileSync(path.join(root, 'packages', name), zip);
-  fs.writeFileSync(path.join(root, 'packages', name + '.sha256'), `${sha}  ${name}\n`);
-  console.log(`Wedge Quest Studio ${version} (${date}, ${commit})`);
-  console.log(`packages/${name}  ${entries.length} files, ${(zip.length / 1024).toFixed(0)} KB`);
-  console.log(`sha256  ${sha}`);
+  console.log(`Wedge Quest ${version} (${date}, ${commit})`);
+  for (const [file, data, what] of [[name, zip, `${entries.length} files`], [cloudName, cloud, 'the page to publish as the cloud artifact']]) {
+    fs.writeFileSync(path.join(root, 'packages', file), data);
+    fs.writeFileSync(path.join(root, 'packages', file + '.sha256'), `${sha256(data)}  ${file}\n`);
+    console.log(`packages/${file}  ${(data.length / 1024).toFixed(0)} KB, ${what}`);
+    console.log(`  sha256  ${sha256(data)}`);
+  }
+  if (!tagged) console.log(`\nTo make this the official ${version}: git tag v${version} && git push origin v${version}`);
 } finally {
   fs.rmSync(tmp, { recursive: true, force: true });
 }
@@ -104,14 +136,12 @@ function makeZip(entries, isoDate) {
   let offset = 0;
   for (const e of entries) {
     const name = Buffer.from(e.name, 'utf8');
-    const packed = zlib.deflateRawSync(e.data, { level: 9 });
-    const stored = packed.length >= e.data.length;
-    const body = stored ? e.data : packed;
+    const body = e.data; // stored as it is: see the note at the top
     const crc = crc32(e.data);
     const common = Buffer.alloc(26);
     common.writeUInt16LE(20, 0); // version needed
     common.writeUInt16LE(0x0800, 2); // names are UTF-8
-    common.writeUInt16LE(stored ? 0 : 8, 4);
+    common.writeUInt16LE(0, 4); // method: stored
     common.writeUInt16LE(dosTime, 6);
     common.writeUInt16LE(dosDate, 8);
     common.writeUInt32LE(crc, 10);

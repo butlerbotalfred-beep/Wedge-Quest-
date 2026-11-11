@@ -882,18 +882,23 @@ def address_lines(cfg: Config) -> list[str]:
 
 
 def page_build() -> dict | None:
-    """The build stamped into www/index.html, or None when the page has no stamp (older than 1.0.1) or is missing."""
+    """The build stamped into www/index.html: None when the page has no stamp (older than 1.0.1), {} when it cannot be read."""
     try:
         m = re.search(r"window\.WQ_BUILD = (\{[^}]*\});", (WWW / "index.html").read_text(encoding="utf-8"))
+    except OSError:
+        return {}
+    try:
         build = json.loads(m.group(1)) if m else None
-    except (OSError, ValueError):
+    except ValueError:
         return None
     return build if isinstance(build, dict) else None
 
 
 def build_text(build: dict | None) -> str:
-    if not build:
+    if build is None:
         return "no version (older than 1.0.1)"
+    if not build:
+        return "missing or unreadable"
     return f"{build.get('version', '?')} ({build.get('date', '?')}, {build.get('commit', '?')})"
 
 
@@ -908,8 +913,9 @@ def banner(cfg: Config, app: App) -> str:
             "           Replace both files from the same package, then start again.",
             "",
         ]
-    lines += address_lines(cfg)
-    if len(lines) > 4:
+    addresses = address_lines(cfg)
+    lines += addresses
+    if len(addresses) > 1:
         lines.append("  (open one of these on another computer, an iPad or a phone; use the same one each time)")
     lines.append("")
     if app.quiz.enabled:
@@ -927,7 +933,7 @@ def banner(cfg: Config, app: App) -> str:
 def run_check(cfg: Config, play: bool = True) -> int:
     log = make_log()
     ok = True
-    print(f"Wedge Quest Studio {VERSION} setup check\n")
+    print(f"Wedge Quest Studio {build_text(BUILD)} setup check\n")
     print(f"python   {sys.version.split()[0]}")
     print(f"www      {'found' if (WWW / 'index.html').exists() else 'MISSING (the game files are not in ./www)'}")
     ok &= (WWW / "index.html").exists()
@@ -1379,7 +1385,7 @@ class LoginItem:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Wedge Quest Studio home server")
-    ap.add_argument("--version", action="version", version=f"Wedge Quest Studio {VERSION}")
+    ap.add_argument("--version", action="version", version=f"Wedge Quest Studio {BUILD['version']} ({BUILD['date']}, {BUILD['commit']})")
     ap.add_argument("--local", action="store_true", help="only accept connections from this computer")
     ap.add_argument("--port", type=int, help="port to listen on (default 8777, or WQ_PORT)")
     ap.add_argument("--open", action="store_true", help="open the game in a browser on this computer")

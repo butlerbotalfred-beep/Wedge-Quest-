@@ -1,7 +1,9 @@
 #!/bin/bash
 # Builds the Studio package for the version in version.json:
-#   packages/WedgeQuest-Studio-<version>.zip  and  packages/WedgeQuest-Studio-<version>.zip.sha256
-# The same commit always gives the same zip, byte for byte.
+#   packages/WedgeQuest-Studio-<version>.zip   for the Studio at home
+#   packages/WedgeQuest-Cloud-<version>.html   the page to publish as the cloud artifact
+# each with a .sha256 beside it. The same commit always gives the same files, byte for byte.
+# It runs ./check first and refuses if anything is not committed or not pushed.
 # Usage:  ./release
 cd "$(dirname "$0")" || exit 1
 NODE_MIN=22
