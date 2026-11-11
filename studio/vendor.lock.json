@@ -1,0 +1,50 @@
+{
+  "fonts/baloo2-latin-ext.woff2": {
+    "sha256": "77f82a2cdec619cea53db60cf87ff74a195304e589617fbb3bbdf5c566669ee1",
+    "from": "https://fonts.gstatic.com/s/baloo2/v23/wXKrE3kTposypRyd51bcAM4olXcLtA.woff2"
+  },
+  "fonts/baloo2-latin.woff2": {
+    "sha256": "2e9420db49d01d76a7b8a38ef22ec9c45305d9f15fafa370389b7bf467658fc3",
+    "from": "https://fonts.gstatic.com/s/baloo2/v23/wXKrE3kTposypRyd51jcAM4olXc.woff2"
+  },
+  "fonts/fredoka-latin-ext.woff2": {
+    "sha256": "337681f6b85d3ea22d9dd48c593d32a3a2588755a76ad9e3a4c64d014db51db1",
+    "from": "https://fonts.gstatic.com/s/fredoka/v17/X7n64b87HvSqjb_WIi2yDCRwoQ_k7367_DWg89XgHPyhRMw.woff2"
+  },
+  "fonts/fredoka-latin.woff2": {
+    "sha256": "27d49d7c8362279bf81267c615481f4be9548d7568d58889aeb1a6395dd6c070",
+    "from": "https://fonts.gstatic.com/s/fredoka/v17/X7n64b87HvSqjb_WIi2yDCRwoQ_k7367_DWu89XgHPyh.woff2"
+  },
+  "vendor/three-0.147.0/build/three.min.js": {
+    "sha256": "f34446bf875b5fb0dcd93819ffe1d9e182d46634ee855f5d904c6c4ac7cdbc95",
+    "from": "https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"
+  },
+  "vendor/three-0.147.0/examples/js/postprocessing/EffectComposer.js": {
+    "sha256": "6c8bf2f6b06778fdadf7cfd09ef4c17d881428d1cdee953e3348b3f54df4bc75",
+    "from": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"
+  },
+  "vendor/three-0.147.0/examples/js/postprocessing/RenderPass.js": {
+    "sha256": "3c1a07df004b36c1fac6af2a443953ef589f88fb024dd0f01d5f9f6252dfc371",
+    "from": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"
+  },
+  "vendor/three-0.147.0/examples/js/postprocessing/ShaderPass.js": {
+    "sha256": "f0d8d767e089c99ad04f6714cd4fac29363d6b0207543cd4335922ea143856a6",
+    "from": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"
+  },
+  "vendor/three-0.147.0/examples/js/postprocessing/UnrealBloomPass.js": {
+    "sha256": "1a5b8476addc578c179200bed5a0da54bb176c1b41ef89d2174ff76b0a4410e7",
+    "from": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"
+  },
+  "vendor/three-0.147.0/examples/js/shaders/CopyShader.js": {
+    "sha256": "249592106188290488cb9419fc6231b701983cdc23c25c7805536cf06800ff48",
+    "from": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"
+  },
+  "vendor/three-0.147.0/examples/js/shaders/GammaCorrectionShader.js": {
+    "sha256": "17c5bb3367c55bd3945ea9b5391c613b933dcffae2e7fae5a318c19d4c434872",
+    "from": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/GammaCorrectionShader.js"
+  },
+  "vendor/three-0.147.0/examples/js/shaders/LuminosityHighPassShader.js": {
+    "sha256": "3c8552bb514a01009c07eb17e576f14db43cff64ce8cfab01667ab8db2e85afe",
+    "from": "https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"
+  }
+}

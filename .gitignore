@@ -1,0 +1,18 @@
+# Secrets: the API key lives only on the Studio
+.env
+.env.*
+!.env.example
+
+# Voice model files (large, downloaded on first run)
+models/
+
+# Caches and editor leftovers
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+.cache/
+.DS_Store
+.wq-transfer.tgz
+
+# dist/ and studio/www/ are tracked on purpose: they are the shipped pages

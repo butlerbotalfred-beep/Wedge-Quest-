@@ -1,0 +1,35 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "wedge-quest",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8765", "--directory", "dist", "--bind", "127.0.0.1"],
+      "port": 8765
+    },
+    {
+      "name": "fake-claude",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["studio/tests/fake_claude.py", "8790"],
+      "port": 8790
+    },
+    {
+      "name": "wedge-quest-studio",
+      "runtimeExecutable": "uv",
+      "runtimeArgs": ["run", "--script", "studio/server.py", "--local", "--port", "8777"],
+      "port": 8777
+    },
+    {
+      "name": "wedge-quest-studio-lan",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "caffeinate -i -w $$ & exec env WQ_VOICE_ENGINE=off uv run --script studio/server.py --port 8777"],
+      "port": 8777
+    },
+    {
+      "name": "share-studio-zip",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-I", "-c", "import functools,http.server,os,sys,threading;d,p,m=os.path.abspath(sys.argv[1]),int(sys.argv[2]),float(sys.argv[3]);s=http.server.ThreadingHTTPServer(('0.0.0.0',p),functools.partial(http.server.SimpleHTTPRequestHandler,directory=d));threading.Timer(m*60,s.shutdown).start();print('sharing',d,'on port',p,'for',m,'minutes',flush=True);s.serve_forever();print('time is up, stopped',flush=True)", "zip-share", "8780", "15"],
+      "port": 8780
+    }
+  ]
+}

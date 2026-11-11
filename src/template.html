@@ -1,0 +1,63 @@
+<meta charset="utf-8">
+<title>Wedge Quest</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Fredoka:wght@400;500;600;700&display=swap">
+<style>
+/*@CSS*/
+</style>
+
+<div id="app">
+  <div id="stage"><canvas id="gl" aria-label="Game board. Drag to turn it, scroll or pinch to zoom."></canvas></div>
+  <div id="ui">
+    <header id="topbar" hidden>
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span><span>Wedge Quest</span></div>
+      <div class="chip off" id="aiChip"><span id="aiText">Built-in questions</span></div>
+      <div class="tools">
+        <button class="icon-btn" id="btnSound" type="button" aria-label="Sound effects" aria-pressed="true"></button>
+        <button class="icon-btn" id="btnGlow" type="button" aria-label="Neon glow" aria-pressed="true"></button>
+        <button class="icon-btn" id="btnSpeak" type="button" aria-label="Read questions aloud" aria-pressed="true"></button>
+        <button class="icon-btn" id="btnFull" type="button" aria-label="Full screen"></button>
+        <button class="icon-btn" id="btnHelp" type="button" aria-label="How to play"></button>
+        <button class="icon-btn" id="btnMenu" type="button" aria-label="Game menu"></button>
+      </div>
+    </header>
+    <aside id="side" hidden aria-label="Players and topics">
+      <div id="players"></div>
+      <div id="legend" class="legend" aria-label="Topics"></div>
+    </aside>
+    <section id="dock" hidden>
+      <div class="pedestal">
+        <span class="ped-base"></span>
+        <span class="ped-ring"></span>
+        <button id="die" class="die" type="button" aria-label="Roll the die" disabled></button>
+      </div>
+      <div id="prompt"></div>
+    </section>
+    <section id="setup" class="screen" aria-label="Game setup"></section>
+    <div id="modal" hidden></div>
+    <div id="toasts"></div>
+    <div id="tip" role="tooltip" hidden></div>
+    <div id="live" class="sr-only" aria-live="polite"></div>
+  </div>
+  <div id="fallback" hidden>
+    <div>
+      <h2>The 3D board needs WebGL</h2>
+      <p>This browser could not start the graphics the board uses. Try a recent version of Chrome, Safari, Edge or Firefox, and make sure hardware acceleration is turned on.</p>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/GammaCorrectionShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<!--@DEV-->
+<script>
+/*@JS*/
+</script>
